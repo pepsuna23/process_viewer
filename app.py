@@ -32,6 +32,9 @@ def get_processes():
             info['memory_val'] = memory_mb
             
             info['cpu_percent'] = info['cpu_percent'] or 0.0
+            
+            if info.get('username') and '\\' in info['username']:
+                info['username'] = info['username'].split('\\')[-1]
 
             del info['memory_info']
             processes.append(info)

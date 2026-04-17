@@ -61,39 +61,77 @@
         }
 
         .stat-card {
-            background: var(--card-bg);
+            background: transparent;
             padding: 20px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            border: 1px solid var(--border);
+            box-shadow: none;
+            border: none;
             position: relative;
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .stat-label {
-            color: var(--text-muted);
-            font-size: 0.875rem;
-            margin-bottom: 8px;
+        .chart-container {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin: 0 auto;
         }
 
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 600;
+        .circular-chart {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            max-height: 100%;
+            filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.4));
         }
 
-        .progress-bar-bg {
-            background: #334155;
-            height: 6px;
-            border-radius: 3px;
-            margin-top: 12px;
+        .circle {
+            fill: none;
+            stroke-width: 5;
+            stroke-linecap: butt;
+            /* Flat ends like in the image */
+            transition: stroke-dasharray 0.5s ease;
+        }
+
+        .circle-cpu {
+            stroke: var(--accent-primary);
+        }
+
+        .circle-mem {
+            stroke: var(--accent-secondary);
+        }
+
+        .circle-threads {
+            stroke: #7bd0858b;
+        }
+
+        .chart-content {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
-        .progress-bar-fill {
-            height: 100%;
-            border-radius: 3px;
-            transition: width 0.5s ease;
-            background: var(--accent-primary);
+        .chart-value {
+            font-size: 3rem;
+            font-weight: 500;
+            color: var(--text-main);
+            line-height: 1;
+        }
+
+        .chart-label {
+            color: var(--text-muted);
+            font-size: 1.25rem;
+            text-align: center;
+            margin-top: 6px;
         }
 
         .toolbar {
@@ -233,8 +271,8 @@
     <div class="container">
         <header>
             <div>
-                <h1>System Monitor Pro</h1>
-                <div style="font-size: 0.9rem; color: var(--text-muted); font-style: italic; margin-top: 4px;">nothing
+                <h1 id="app-title">System Monitor Pro</h1>
+                <div id="app-subtitle" style="font-size: 0.9rem; color: var(--text-muted); font-style: italic; margin-top: 4px;">nothing
                     runs like a deere</div>
             </div>
             <div id="connection-status" style="font-size: 0.8rem; color: var(--success);">● Live</div>
@@ -242,23 +280,40 @@
 
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-label">CPU Usage</div>
-                <div class="stat-value" id="cpu-val">0%</div>
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" id="cpu-bar" style="width: 0%"></div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Memory Usage</div>
-                <div class="stat-value" id="mem-val">0%</div>
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" id="mem-bar" style="width: 0%; background: var(--accent-secondary);">
+                <div class="chart-container">
+                    <svg viewBox="-3 -3 42 42" class="circular-chart">
+                        <path class="circle circle-cpu" id="cpu-circle" stroke-dasharray="0, 100"
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div class="chart-content">
+                        <div class="chart-value" id="cpu-val">0%</div>
+                        <div class="chart-label" id="lbl-cpu">CPU</div>
                     </div>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Active Threads</div>
-                <div class="stat-value" id="threads-val">0</div>
+                <div class="chart-container">
+                    <svg viewBox="-3 -3 42 42" class="circular-chart">
+                        <path class="circle circle-mem" id="mem-circle" stroke-dasharray="0, 100"
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div class="chart-content">
+                        <div class="chart-value" id="mem-val">0%</div>
+                        <div class="chart-label" id="lbl-mem">Memory</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="chart-container">
+                    <svg viewBox="-3 -3 42 42" class="circular-chart">
+                        <path class="circle circle-threads" id="threads-circle" stroke-dasharray="0, 100"
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div class="chart-content">
+                        <div class="chart-value" id="threads-val">0</div>
+                        <div class="chart-label" id="lbl-thr">Threads</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -267,19 +322,23 @@
             <button class="btn-refresh" id="refresh-btn">Refresh</button>
             <button class="btn-refresh" id="run-btn"
                 style="background: var(--accent-secondary); color: var(--bg-color);">Run New Task</button>
+            <select id="lang-select" class="btn-refresh" style="background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border); outline: none;">
+                <option value="en">English</option>
+                <option value="bg">Български</option>
+            </select>
         </div>
 
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th onclick="sortTable('pid')">PID ↕</th>
-                        <th onclick="sortTable('name')">Name ↕</th>
-                        <th onclick="sortTable('username')">User ↕</th>
-                        <th onclick="sortTable('status')">Status ↕</th>
-                        <th onclick="sortTable('cpu')">CPU % ↕</th>
-                        <th onclick="sortTable('memory')">Memory (MB) ↕</th>
-                        <th>Actions</th>
+                        <th id="th-pid" onclick="sortTable('pid')">PID ↕</th>
+                        <th id="th-name" onclick="sortTable('name')">Name ↕</th>
+                        <th id="user-header" onclick="sortTable('username')">User (All) ↕</th>
+                        <th id="th-status" onclick="sortTable('status')">Status ↕</th>
+                        <th id="th-cpu" onclick="sortTable('cpu')">CPU % ↕</th>
+                        <th id="th-memory" onclick="sortTable('memory')">Memory (MB) ↕</th>
+                        <th id="th-actions">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="process-list">
@@ -293,18 +352,98 @@
         let sortCol = 'memory';
         let sortAsc = false;
 
+        const translations = {
+            en: {
+                title: "System Monitor Pro",
+                subtitle: "nothing runs like a deere",
+                live: "● Live",
+                cpu: "CPU",
+                memory: "Memory",
+                threads: "Threads",
+                search_placeholder: "Search processes...",
+                refresh: "Refresh",
+                run_task: "Run New Task",
+                pid: "PID ↕",
+                name: "Name ↕",
+                user_all: "User (All) ↕",
+                user_active: "User (Active Only) ↕",
+                status: "Status ↕",
+                cpu_percent: "CPU % ↕",
+                memory_mb: "Memory (MB) ↕",
+                actions: "Actions",
+                terminate: "Terminate",
+                confirm_kill: "Are you sure you want to terminate {name} (PID {pid})?",
+                prompt_cmd: "Enter program name or command (e.g., 'notepad', 'calc', 'excel'):",
+                error: "Error: ",
+                req_failed: "Request failed"
+            },
+            bg: {
+                title: "Системен Монитор Pro",
+                subtitle: "нищо не върви като еленче",
+                live: "● На живо",
+                cpu: "Процесор",
+                memory: "Памет",
+                threads: "Нишки",
+                search_placeholder: "Търсене на процеси...",
+                refresh: "Обновяване",
+                run_task: "Нова Задача",
+                pid: "PID ↕",
+                name: "Име ↕",
+                user_all: "Потребител (Всички) ↕",
+                user_active: "Потребител (Само Активни) ↕",
+                status: "Състояние ↕",
+                cpu_percent: "CPU % ↕",
+                memory_mb: "Памет (MB) ↕",
+                actions: "Действия",
+                terminate: "Прекрати",
+                confirm_kill: "Сигурни ли сте, че искате да прекратите {name} (PID {pid})?",
+                prompt_cmd: "Въведете име на програма или команда (напр. 'notepad', 'calc', 'excel'):",
+                error: "Грешка: ",
+                req_failed: "Заявката се провали"
+            }
+        };
+
+        let currentLang = localStorage.getItem('lang') || 'en';
+        function t(key) { return translations[currentLang][key] || key; }
+
+        function updateLang() {
+            document.getElementById('app-title').innerText = t('title');
+            document.getElementById('app-subtitle').innerText = t('subtitle');
+            document.getElementById('connection-status').innerText = t('live');
+            
+            document.getElementById('lbl-cpu').innerText = t('cpu');
+            document.getElementById('lbl-mem').innerText = t('memory');
+            document.getElementById('lbl-thr').innerText = t('threads');
+            
+            document.getElementById('search-input').placeholder = t('search_placeholder');
+            document.getElementById('refresh-btn').innerText = t('refresh');
+            document.getElementById('run-btn').innerText = t('run_task');
+            
+            document.getElementById('th-pid').innerText = t('pid');
+            document.getElementById('th-name').innerText = t('name');
+            document.getElementById('user-header').innerText = filterActiveUser ? t('user_active') : t('user_all');
+            document.getElementById('th-status').innerText = t('status');
+            document.getElementById('th-cpu').innerText = t('cpu_percent');
+            document.getElementById('th-memory').innerText = t('memory_mb');
+            document.getElementById('th-actions').innerText = t('actions');
+            
+            renderTable();
+        }
+
         async function updateDashboard() {
             try {
                 const statsRes = await fetch('/api/stats');
                 const stats = await statsRes.json();
 
                 document.getElementById('cpu-val').innerText = stats.cpu_percent + '%';
-                document.getElementById('cpu-bar').style.width = stats.cpu_percent + '%';
+                document.getElementById('cpu-circle').setAttribute('stroke-dasharray', `${stats.cpu_percent}, 100`);
 
                 document.getElementById('mem-val').innerText = stats.memory_percent + '%';
-                document.getElementById('mem-bar').style.width = stats.memory_percent + '%';
+                document.getElementById('mem-circle').setAttribute('stroke-dasharray', `${stats.memory_percent}, 100`);
 
                 document.getElementById('threads-val').innerText = stats.total_threads;
+                const threadPercent = Math.min((stats.total_threads / 10000) * 100, 100);
+                document.getElementById('threads-circle').setAttribute('stroke-dasharray', `${threadPercent}, 100`);
 
             } catch (err) {
                 console.error("Stats error", err);
@@ -321,6 +460,9 @@
             }
         }
 
+        let filterActiveUser = false;
+        let activeUserName = '';
+
         function renderTable() {
             const tbody = document.getElementById('process-list');
             const term = document.getElementById('search-input').value.toLowerCase();
@@ -329,6 +471,10 @@
                 p.name.toLowerCase().includes(term) ||
                 String(p.pid).includes(term)
             );
+
+            if (filterActiveUser && activeUserName) {
+                filtered = filtered.filter(p => p.username === activeUserName);
+            }
 
             filtered.sort((a, b) => {
                 let valA, valB;
@@ -346,14 +492,23 @@
                     <td class="pid">${proc.pid}</td>
                     <td style="font-weight: 500;">${proc.name}</td>
                     <td style="color: var(--text-muted);">${proc.username || '-'}</td>
-                    <td><span class="status-badge ${getStatusClass(proc.status)}">${proc.status}</span></td>
+                    <td><span class="status-badge ${getStatusClass(proc.status)}">${getTranslatedStatus(proc.status)}</span></td>
                     <td>${proc.cpu_percent.toFixed(1)}%</td>
                     <td class="memory">${proc.memory_mb}</td>
                     <td>
-                        <button class="btn-kill" onclick="killProcess(${proc.pid}, '${proc.name}')">Terminate</button>
+                        <button class="btn-kill" onclick="killProcess(${proc.pid}, '${proc.name}')">${t('terminate')}</button>
                     </td>
                 </tr>
             `).join('');
+        }
+
+        function getTranslatedStatus(status) {
+            if (currentLang === 'bg') {
+                if (status === 'running') return 'работи';
+                if (status === 'stopped') return 'спрян';
+                if (status === 'sleeping') return 'спи';
+            }
+            return status;
         }
 
         function getStatusClass(status) {
@@ -363,17 +518,32 @@
         }
 
         function sortTable(col) {
-            if (sortCol === col) sortAsc = !sortAsc;
-            else {
-                sortCol = col;
-                sortAsc = true;
-                if (col === 'memory' || col === 'cpu') sortAsc = false;
+            if (col === 'username') {
+                filterActiveUser = !filterActiveUser;
+                const header = document.getElementById('user-header');
+                if (filterActiveUser) {
+                    header.innerText = t('user_active');
+
+                    if (!activeUserName && currentProcesses.length > 0) {
+                        const explorerProc = currentProcesses.find(p => p.name.toLowerCase() === 'explorer.exe');
+                        if (explorerProc) activeUserName = explorerProc.username;
+                    }
+                } else {
+                    header.innerText = t('user_all');
+                }
+            } else {
+                if (sortCol === col) sortAsc = !sortAsc;
+                else {
+                    sortCol = col;
+                    sortAsc = true;
+                    if (col === 'memory' || col === 'cpu') sortAsc = false;
+                }
             }
             renderTable();
         }
 
         async function killProcess(pid, name) {
-            if (!confirm(`Are you sure you want to terminate ${name} (PID ${pid})?`)) return;
+            if (!confirm(t('confirm_kill').replace('{name}', name).replace('{pid}', pid))) return;
 
             try {
                 const res = await fetch(`/api/kill/${pid}`, { method: 'DELETE' });
@@ -382,15 +552,15 @@
                     alert(data.message);
                     fetchProcesses();
                 } else {
-                    alert('Error: ' + data.message);
+                    alert(t('error') + data.message);
                 }
             } catch (err) {
-                alert('Request failed');
+                alert(t('req_failed'));
             }
         }
 
         async function runProgram() {
-            const cmd = prompt("Enter program name or command (e.g., 'notepad', 'calc', 'excel'):");
+            const cmd = prompt(t('prompt_cmd'));
             if (!cmd) return;
 
             try {
@@ -403,14 +573,23 @@
                 if (data.success) {
                     alert(data.message);
                 } else {
-                    alert('Error: ' + data.message);
+                    alert(t('error') + data.message);
                 }
             } catch (err) {
-                alert('Request failed');
+                alert(t('req_failed'));
             }
         }
 
         document.getElementById('search-input').addEventListener('input', renderTable);
+        
+        document.getElementById('lang-select').value = currentLang;
+        document.getElementById('lang-select').addEventListener('change', (e) => {
+            currentLang = e.target.value;
+            localStorage.setItem('lang', currentLang);
+            updateLang();
+        });
+        updateLang();
+
         document.getElementById('refresh-btn').addEventListener('click', () => {
             fetchProcesses();
             updateDashboard();

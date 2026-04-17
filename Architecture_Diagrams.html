@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Архитектурни Диаграми - System Monitor Pro</title>
+    <!-- Зареждане на Mermaid.js -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .diagram-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 40px;
+            padding: 20px;
+            width: 90%;
+            max-width: 1000px;
+            overflow-x: auto;
+        }
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Process Viewer - Архитектура</h1>
+    
+    <div class="diagram-container">
+        <h2>1. UML Модулна / Структурна Диаграма</h2>
+        <div class="mermaid">
+            classDiagram
+                class FlaskServer {
+                    <<Thread: flask_thread>>
+                    +app Flask
+                    +index() HTML
+                    +api_processes() List
+                    +api_stats() Dict
+                    +api_run_program(command) Response
+                    +api_kill_process(pid) Response
+                }
+                
+                class StatsMonitor {
+                    <<Thread: stats_thread>>
+                    -current_stats Dict
+                    -previous_processes Dict
+                    -first_run Bool
+                    +update_stats_loop() loop
+                    +get_processes() List
+                }
+                
+                class PyWebView {
+                    <<Main Thread>>
+                    +create_window(title, url, width, height)
+                    +start()
+                }
+                
+                class PSUtil {
+                    <<External Library>>
+                    +process_iter()
+                    +cpu_percent()
+                    +virtual_memory()
+                    +Process(pid)
+                }
+                
+                class SystemLogger {
+                    <<Local File: process_monitor.log>>
+                    +info(message)
+                    +error(message)
+                }
+
+                PyWebView --> FlaskServer : Starts GUI
+                FlaskServer --> StatsMonitor : Calls get_processes and reads stats
+                StatsMonitor --> PSUtil : Gathers system data
+                FlaskServer --> PSUtil : Kills processes
+                StatsMonitor --> SystemLogger : Logs process status
+                FlaskServer --> SystemLogger : Logs commands
+        </div>
+    </div>
+
+    <div class="diagram-container">
+        <h2>2. ER Диаграма на структурите от данни</h2>
+        <div class="mermaid">
+            erDiagram
+                OPERATING_SYSTEM ||--o{ PROCESS : executes
+                OPERATING_SYSTEM ||--|| SYSTEM_STATISTICS : generates
+                
+                PROCESS {
+                    int pid PK
+                    string name
+                    string username
+                    string status
+                    float cpu_percent
+                    float memory_mb
+                }
+                
+                SYSTEM_STATISTICS {
+                    float cpu_percent
+                    float memory_percent
+                    int total_threads
+                }
+
+                OPERATING_SYSTEM {
+                    string os_type
+                }
+        </div>
+    </div>
+
+    <div class="diagram-container">
+        <h2>3. Sequence диаграма: Прекратяване на процес</h2>
+        <div class="mermaid">
+            sequenceDiagram
+                actor User
+                participant UI
+                participant Flask as Flask Route
+                participant ProcessService as Process Service (psutil)
+                participant Logger as Logging Service
+                
+                User->>UI: Clicks Terminate button
+                UI->>Flask: DELETE /api/kill/{pid}
+                Flask->>Flask: Validates PID
+                Flask->>ProcessService: psutil.Process(pid).terminate()
+                ProcessService-->>Flask: Process Terminated
+                Flask->>Logger: Records operation
+                Flask-->>UI: Returns JSON result
+                UI->>User: Shows message and refreshes table
+        </div>
+    </div>
+
+    <div class="diagram-container">
+        <h2>4. Sequence диаграма: Стартиране на нова задача</h2>
+        <div class="mermaid">
+            sequenceDiagram
+                actor User
+                participant UI
+                participant Flask as Flask Route
+                participant Subprocess as subprocess.Popen
+                participant Logger as Logging Service
+                
+                User->>UI: Selects Run New Task
+                UI->>User: Collects input command
+                UI->>Flask: POST /api/run
+                Flask->>Subprocess: subprocess.Popen(command)
+                Subprocess-->>Flask: Command executed/started
+                Flask->>Logger: Records event
+                Flask-->>UI: Returns API status
+                UI->>User: Visualizes result
+        </div>
+    </div>
+
+    <div class="diagram-container">
+        <h2>5. Deployment Диаграма</h2>
+        <div class="mermaid">
+            flowchart TD
+                subgraph Node_1 ["Local Windows Machine"]
+                    direction TB
+                    
+                    subgraph Artifact_1 ["SystemMonitorPro.exe"]
+                        App["app.py (Python Runtime)"]
+                    end
+                    
+                    Artifact_2["templates/index.html"]
+                    Artifact_3[("process_monitor.log")]
+                    
+                    App <-->|HTTP localhost:127.0.0.1:5000| Artifact_2
+                    App -->|Writes logs| Artifact_3
+                end
+        </div>
+    </div>
+
+</body>
+</html>
